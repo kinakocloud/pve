@@ -2,9 +2,9 @@ package pve
 
 import "github.com/kinakocloud/pve/response"
 
-func (m *Machine) GetNodeStatus(nodeId string) (*response.NodeStatus, error) {
+func (m *Machine) GetNodeStatus() (*response.NodeStatus, error) {
 	var data response.NodeStatus
-	if err := m.getQueryJSON("/nodes/"+nodeId+"/status", nil, &data); err != nil {
+	if err := m.getQueryJSON("/nodes/"+m.NodeId+"/status", nil, &data); err != nil {
 		return nil, err
 	}
 

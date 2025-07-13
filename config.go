@@ -7,10 +7,10 @@ import (
 )
 
 // Get
-func (m *Machine) GetVmConfig(vmId int64) (*response.VMConfig, error) {
+func (v *VM) GetConfig() (*response.VMConfig, error) {
 	var data response.VMConfig
-	if err := m.getQueryJSON(
-		"/nodes/"+m.NodeId+"/qemu/"+strconv.FormatInt(vmId, 10)+"/config",
+	if err := v.Machine.getQueryJSON(
+		"/nodes/"+v.Machine.NodeId+"/qemu/"+strconv.FormatInt(v.ID, 10)+"/config",
 		nil,
 		&data,
 	); err != nil {
@@ -21,9 +21,9 @@ func (m *Machine) GetVmConfig(vmId int64) (*response.VMConfig, error) {
 }
 
 // Edit
-func (m *Machine) EditVmConfig(vmId int64, config map[string]any) error {
-	if err := m.PostFormJSON(
-		"/nodes/"+m.NodeId+"/qemu/"+strconv.FormatInt(vmId, 10)+"/config",
+func (v *VM) EditConfig(config map[string]any) error {
+	if err := v.Machine.PostFormJSON(
+		"/nodes/"+v.Machine.NodeId+"/qemu/"+strconv.FormatInt(v.ID, 10)+"/config",
 		config,
 		nil,
 	); err != nil {

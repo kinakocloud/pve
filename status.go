@@ -6,10 +6,10 @@ import (
 	"github.com/kinakocloud/pve/response"
 )
 
-func (m *Machine) GetVmStatusCurrent(vmId int64) (*response.VMStatus, error) {
+func (v *VM) GetVmStatusCurrent() (*response.VMStatus, error) {
 	var data response.VMStatus
-	if err := m.getQueryJSON(
-		"/nodes/"+m.NodeId+"/qemu/"+strconv.FormatInt(vmId, 10)+"/status/current",
+	if err := v.Machine.getQueryJSON(
+		"/nodes/"+v.Machine.NodeId+"/qemu/"+strconv.FormatInt(v.ID, 10)+"/status/current",
 		nil,
 		&data,
 	); err != nil {
@@ -19,13 +19,13 @@ func (m *Machine) GetVmStatusCurrent(vmId int64) (*response.VMStatus, error) {
 	return &data, nil
 }
 
-func (m *Machine) VmStart(vmId int64) error {
+func (v *VM) VmStart() error {
 	var params = map[string]any{
 		"timeout": 30, // seconds
 	}
 
-	if err := m.PostFormJSON(
-		"/nodes/"+m.NodeId+"/qemu/"+strconv.FormatInt(vmId, 10)+"/status/start",
+	if err := v.Machine.PostFormJSON(
+		"/nodes/"+v.Machine.NodeId+"/qemu/"+strconv.FormatInt(v.ID, 10)+"/status/start",
 		params,
 		nil,
 	); err != nil {
