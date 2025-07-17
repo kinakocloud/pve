@@ -1,27 +1,22 @@
 package pve
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
-	"time"
 )
 
 // GET
-func (m *Machine) getQuery(uri string, query map[string]any) ([]byte, error) {
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
+func (m *Machine) getQuery(endpoint string, query map[string]any) ([]byte, error) {
 	baseURL, err := url.Parse(m.API)
 	if err != nil {
 		return nil, fmt.Errorf("invalid API URL: %w", err)
 	}
 
-	fullURL, err := baseURL.Parse("/api2/json" + uri)
+	fullURL, err := baseURL.Parse("/api2/json" + endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("invalid URI: %w", err)
 	}
@@ -42,7 +37,7 @@ func (m *Machine) getQuery(uri string, query map[string]any) ([]byte, error) {
 	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s=%s", m.User, m.Token))
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := m.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -66,16 +61,24 @@ func (m *Machine) getQueryJSON(endpoint string, params map[string]any, result an
 		return err
 	}
 
-	if result != nil {
-		return json.Unmarshal(data, result)
+	if result == nil {
+		return nil
 	}
 
-	return nil
+	return json.Unmarshal(data, result)
 }
 
 // POST
 func (m *Machine) httpPost(endpoint string, jsonData any) ([]byte, error) {
-	fullURL := m.API + endpoint
+	baseURL, err := url.Parse(m.API)
+	if err != nil {
+		return nil, fmt.Errorf("invalid API URL: %w", err)
+	}
+
+	fullURL, err := baseURL.Parse("/api2/json" + endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URI: %w", err)
+	}
 
 	var reqBody io.Reader
 	if jsonData != nil {
@@ -83,23 +86,18 @@ func (m *Machine) httpPost(endpoint string, jsonData any) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal JSON: %w", err)
 		}
-		reqBody = strings.NewReader(string(jsonBytes))
+		reqBody = bytes.NewReader(jsonBytes)
 	}
 
-	req, err := http.NewRequest("POST", fullURL, reqBody)
+	req, err := http.NewRequest("POST", fullURL.String(), reqBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s@%s!%s=%s",
-		m.User, "pam", m.Token, "your-token-secret"))
+	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s=%s", m.User, m.Token))
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := m.Client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -111,7 +109,7 @@ func (m *Machine) httpPost(endpoint string, jsonData any) ([]byte, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return body, nil
@@ -123,26 +121,93 @@ func (m *Machine) PostFormJSON(endpoint string, formData any, result any) error 
 		return err
 	}
 
+	if result == nil {
+		return nil
+	}
+
+	return json.Unmarshal(data, result)
+}
+
+// PUT
+func (m *Machine) httpPut(endpoint string, jsonData any) ([]byte, error) {
+	baseURL, err := url.Parse(m.API)
+	if err != nil {
+		return nil, fmt.Errorf("invalid API URL: %w", err)
+	}
+
+	fullURL, err := baseURL.Parse("/api2/json" + endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URI: %w", err)
+	}
+
+	var reqBody io.Reader
+	if jsonData != nil {
+		jsonBytes, err := json.Marshal(jsonData)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		reqBody = bytes.NewReader(jsonBytes)
+	}
+
+	req, err := http.NewRequest("PUT", fullURL.String(), reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s=%s", m.User, m.Token))
+
+	resp, err := m.Client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
+	}
+
+	return body, nil
+}
+
+func (m *Machine) PutFormJSON(endpoint string, jsonData any, result any) error {
+	data, err := m.httpPut(endpoint, jsonData)
+	if err != nil {
+		return err
+	}
+
+	if result == nil {
+		return nil
+	}
+
 	return json.Unmarshal(data, result)
 }
 
 // DELETE
 func (m *Machine) deleteQuery(endpoint string) error {
-	fullURL := m.API + endpoint
+	baseURL, err := url.Parse(m.API)
+	if err != nil {
+		return fmt.Errorf("invalid API URL: %w", err)
+	}
 
-	req, err := http.NewRequest("DELETE", fullURL, nil)
+	fullURL, err := baseURL.Parse("/api2/json" + endpoint)
+	if err != nil {
+		return fmt.Errorf("invalid URI: %w", err)
+	}
+
+	req, err := http.NewRequest("DELETE", fullURL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s@%s!%s=%s",
-		m.User, "pam", m.Token, "your-token-secret"))
+	req.Header.Set("Authorization", fmt.Sprintf("PVEAPIToken=%s=%s", m.User, m.Token))
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
-
-	resp, err := client.Do(req)
+	resp, err := m.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("request failed: %w", err)
 	}

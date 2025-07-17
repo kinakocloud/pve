@@ -1,6 +1,10 @@
 package pve
 
-import "strconv"
+import (
+	"net/http"
+	"strconv"
+	"time"
+)
 
 type Machine struct {
 	API     string
@@ -8,6 +12,7 @@ type Machine struct {
 	Token   string
 	NodeId  string
 	Storage string
+	Client  *http.Client
 }
 
 func NewMachine(host string, port int, user, token, nodeId, storage string) *Machine {
@@ -17,6 +22,7 @@ func NewMachine(host string, port int, user, token, nodeId, storage string) *Mac
 		Token:   token,
 		NodeId:  nodeId,
 		Storage: storage,
+		Client:  &http.Client{Timeout: 30 * time.Second},
 	}
 }
 

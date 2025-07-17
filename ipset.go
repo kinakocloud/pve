@@ -90,7 +90,7 @@ func (v *VM) AddIpSetAddress(setName, address string) error {
 }
 
 func (v *VM) UpdateFirewallOptions(options map[string]any) error {
-	if err := v.Machine.PostFormJSON(
+	if err := v.Machine.PutFormJSON(
 		"/nodes/"+v.Machine.NodeId+"/qemu/"+strconv.FormatInt(v.ID, 10)+"/firewall/options",
 		options,
 		nil,

@@ -1,38 +1,44 @@
 package response
 
-type VMStatus struct {
-	Data VMStatusData `json:"data"`
+type Time struct {
+	Data struct {
+		Time      int64  `json:"time"`
+		LocalTime int64  `json:"localtime"`
+		TimeZone  string `json:"timezone"`
+	} `json:"data"`
 }
 
-type VMStatusData struct {
-	Clipboard      any                   `json:"clipboard"`
-	Disk           int64                 `json:"disk"`
-	NetOut         int64                 `json:"netout"`
-	Mem            int64                 `json:"mem"`
-	Serial         int                   `json:"serial"`
-	BlockStat      map[string]BlockStats `json:"blockstat"`
-	QMPStatus      string                `json:"qmpstatus"`
-	PID            int                   `json:"pid"`
-	FreeMem        int64                 `json:"freemem"`
-	CPU            float64               `json:"cpu"`
-	Balloon        int64                 `json:"balloon"`
-	Name           string                `json:"name"`
-	BalloonInfo    BalloonInfo           `json:"ballooninfo"`
-	Uptime         int64                 `json:"uptime"`
-	ProxmoxSupport ProxmoxSupport        `json:"proxmox-support"`
-	RunningMachine string                `json:"running-machine"`
-	Agent          int                   `json:"agent"`
-	NetIn          int64                 `json:"netin"`
-	Status         string                `json:"status"`
-	DiskWrite      int64                 `json:"diskwrite"`
-	CPUs           int                   `json:"cpus"`
-	NICs           map[string]NICStats   `json:"nics"`
-	DiskRead       int64                 `json:"diskread"`
-	MaxDisk        int64                 `json:"maxdisk"`
-	MaxMem         int64                 `json:"maxmem"`
-	RunningQemu    string                `json:"running-qemu"`
-	HA             HAInfo                `json:"ha"`
-	VMID           int                   `json:"vmid"`
+type VMStatus struct {
+	Data struct {
+		Clipboard      any                   `json:"clipboard"`
+		Disk           int64                 `json:"disk"`
+		Mem            int64                 `json:"mem"`
+		Serial         int                   `json:"serial"`
+		BlockStat      map[string]BlockStats `json:"blockstat"`
+		QMPStatus      string                `json:"qmpstatus"`
+		PID            int                   `json:"pid"`
+		FreeMem        int64                 `json:"freemem"`
+		CPU            float64               `json:"cpu"`
+		Balloon        int64                 `json:"balloon"`
+		Name           string                `json:"name"`
+		BalloonInfo    BalloonInfo           `json:"ballooninfo"`
+		Uptime         int64                 `json:"uptime"`
+		ProxmoxSupport ProxmoxSupport        `json:"proxmox-support"`
+		RunningMachine string                `json:"running-machine"`
+		Agent          int                   `json:"agent"`
+		NetIn          uint64                `json:"netin"`
+		NetOut         uint64                `json:"netout"`
+		Status         string                `json:"status"`
+		DiskWrite      int64                 `json:"diskwrite"`
+		CPUs           int                   `json:"cpus"`
+		NICs           map[string]NICStats   `json:"nics"`
+		DiskRead       int64                 `json:"diskread"`
+		MaxDisk        int64                 `json:"maxdisk"`
+		MaxMem         int64                 `json:"maxmem"`
+		RunningQemu    string                `json:"running-qemu"`
+		HA             HAInfo                `json:"ha"`
+		VMID           int                   `json:"vmid"`
+	} `json:"data"`
 }
 
 type BlockStats struct {
@@ -101,4 +107,8 @@ type NICStats struct {
 
 type HAInfo struct {
 	Managed int `json:"managed"`
+}
+
+type StatusData struct {
+	Data string `json:"data"`
 }
