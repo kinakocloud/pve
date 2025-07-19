@@ -34,24 +34,11 @@ func (v *VM) GetStatusCurrent() (*response.VMStatus, error) {
 
 // SetStatus sets the status of the VM to one of the allowed values.
 //
-// Allowed statuses are: "start", "stop", "suspend", "shutdown", "reset", "reboot", "resume".
+// Use pve.Status.Start, pve.Status.Stop...
 // It sends a request to the Proxmox API to change the VM status.
 //
 // Returns ErrInvalidVMStatus if the status is not allowed.
 func (vm *VM) SetStatus(status string) error {
-	allowedStatuses := map[string]bool{
-		"start":    true,
-		"stop":     true,
-		"suspend":  true,
-		"shutdown": true,
-		"reset":    true,
-		"reboot":   true,
-		"resume":   true,
-	}
-	if !allowedStatuses[status] {
-		return ErrInvalidVMStatus
-	}
-
 	var response response.StatusData
 	err := vm.Machine.PostFormJSON(
 		"/nodes/"+vm.Machine.NodeId+"/qemu/"+strconv.FormatInt(vm.ID, 10)+"/status/"+status,

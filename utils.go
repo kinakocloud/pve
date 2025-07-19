@@ -49,14 +49,29 @@ func (m *Machine) getQuery(endpoint string, query map[string]any) ([]byte, error
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("HTTP error %d: %s", resp.StatusCode, resp.Status)
 	}
 
 	return body, nil
 }
 
+// Auto Retry
+func (m *Machine) getQueryRetry(endpoint string, query map[string]any, retries int) ([]byte, error) {
+	var err error
+	var data []byte
+
+	for range retries {
+		data, err = m.getQuery(endpoint, query)
+		if err == nil {
+			return data, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed after %d retries: %w", retries, err)
+}
+
 func (m *Machine) getQueryJSON(endpoint string, params map[string]any, result any) error {
-	data, err := m.getQuery(endpoint, params)
+	data, err := m.getQueryRetry(endpoint, params, 3)
 	if err != nil {
 		return err
 	}
