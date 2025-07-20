@@ -19,3 +19,17 @@ func (v *VM) GetRRDData(tf string) ([]response.RRDData, error) {
 	}
 	return data.Data, nil
 }
+
+func (m *Machine) GetRRDData(tf string) ([]response.NodeRRDData, error) {
+	var data response.NodeRRDResponse
+	if err := m.getQueryJSON(
+		"/nodes/"+m.NodeId+"/rrddata",
+		map[string]any{
+			"timeframe": tf,
+		},
+		&data,
+	); err != nil {
+		return data.Data, err
+	}
+	return data.Data, nil
+}
